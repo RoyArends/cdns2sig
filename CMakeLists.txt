@@ -7,17 +7,17 @@ SET(CMAKE_CXX_STANDARD 11)
 
 SET(CMAKE_CXX_FLAGS "-Wall -O2 -g ${CMAKE_CXX_FLAGS}")
 
-INCLUDE_DIRECTORIES(src include ../cdnsrdr/lib)
+INCLUDE_DIRECTORIES(src include cdns/lib)
 
 SET(CDNS2SIG_LIBRARY_FILES
-   ../cdnsrdr/lib/cbor.cpp
-   ../cdnsrdr/lib/cdns.cpp
+   cdns/lib/cbor.cpp
+   cdns/lib/cdns.cpp
 )
 
 ADD_EXECUTABLE(cdns2sig
    src/cdns2sig.cpp
-   ../cdnsrdr/lib/cbor.cpp
-   ../cdnsrdr/lib/cdns.cpp
+   cdns/lib/cbor.cpp
+   cdns/lib/cdns.cpp
 )
 
 INSTALL(TARGETS cdns2sig
