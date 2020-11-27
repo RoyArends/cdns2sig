@@ -16,13 +16,36 @@ static void usage() {
                     "             RD      = Value of the RD bit.\n");
 }
 
+uint8_t MakePrintable(uint8_t c) 
+{
+    switch (c)
+    {
+        case 'A' ... 'Z':
+             return c += 32; // make character lowercase
+        case 0 ... 32:
+        case 44:
+        case 127 ... 255:
+             return '?';
+        default:
+             return c;
+     }
+}
+
+bool IsAlpha(unsigned c) 
+{
+   return ((c - 97) <= 25 );
+}
+
 void ParsePackets(cdns* blob) {
     int offset = blob->index_offset;
+    size_t qr_index = offset;
+
 // loop through all of the query-response data items
-    for (size_t qr_index = offset; qr_index < blob->block.queries.size() + offset; qr_index++) {
+
+    while (qr_index < blob->block.queries.size() + offset) {
 
 // get the query-response data item.
-        cdns_query* qr = &blob->block.queries[qr_index]; 
+        cdns_query* qr = &blob->block.queries[qr_index++]; 
 
 // get the query-response signature.
         cdns_query_signature* sig = NULL; 
@@ -46,14 +69,13 @@ void ParsePackets(cdns* blob) {
         while (name[pos]) pos += name[prev_pos = pos] + 1;
 
 // parse the top level label        
-        bool AGBfail=false;
+        bool AGBfail = false;
         uint8_t tld[64] = "."; // maximum label length is 63, plus the \0 to terminate the string.
         size_t idx = 0;
-        for (size_t i = prev_pos + 1; i < pos; i++) {
-            uint8_t c=name[i];
-            if ('A' <= c && c <= 'Z') c |= 32; // make character lowercase
-            else if (c < 33 || c  == ',' || c > 126) c = '?'; // make unprintables and comma printable
-            AGBfail |= c < 'a' || c > 'z';
+        size_t i = prev_pos + 1;
+        while (i < pos) {
+            uint8_t c=MakePrintable(name[i++]);
+            AGBfail |= !IsAlpha(c);
             tld[idx++] = c;
 	}
              
