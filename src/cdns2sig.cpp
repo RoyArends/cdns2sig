@@ -39,58 +39,41 @@ bool IsAlpha(unsigned c)
 
 void ParsePackets(cdns* blob)
 {
-    // loop through all of the query-response data items
-
     for (size_t qr_index = 0; qr_index < blob->block.queries.size(); qr_index++) {
-
-// get the query-response data item.
         cdns_query* qr = &blob->block.queries[qr_index];
-
-// get the query-response signature.
         cdns_query_signature* sig = NULL;
 
         if (
-            (sig = &blob->block.tables.q_sigs[qr->query_signature_index - blob->index_offset]) == NULL || // the index must point to an existing sig
-            sig->query_opcode        ||   // the opcode of the query must be 0 (QUERY)
+            (sig = &blob->block.tables.q_sigs[qr->query_signature_index - blob->index_offset]) == NULL || 
+            sig->query_opcode        ||   
             !sig->is_query_present() ||
- 	          !sig->is_response_present() ||
+            !sig->is_response_present() ||
             sig->is_query_present_with_no_question() ) continue;
 
 
-// get the query name
-        size_t ti     = qr->query_name_index - blob->index_offset;
-        size_t l      = blob->block.tables.name_rdata[ti].l;
-        uint8_t *name = blob->block.tables.name_rdata[ti].v;
+        uint8_t *name = blob->block.tables.name_rdata[qr->query_name_index - blob->index_offset].v;
 
-// find top level label
-        size_t pos = 0;
-        size_t prev_pos = 0;
+        size_t pos = 0, prev_pos = 0;
         while (name[pos]) pos += name[prev_pos = pos] + 1;
 
-// parse the top level label
         bool AGBfail = false;
-        uint8_t tld[64] = "."; // maximum label length is 63, plus the \0 to terminate the string.
-        size_t idx = 0;
-        size_t i = prev_pos + 1;
+        uint8_t tld[64] = "."; 
+        size_t idx = 0, i = prev_pos + 1;
         while (i < pos)
         {
             uint8_t c=MakePrintable(name[i++]);
             AGBfail |= !IsAlpha(c);
             tld[idx++] = c;
-	      }
+        }
 
         AGBfail |= pos - prev_pos < 4;
 
-        ti = qr->client_address_index - blob->index_offset;
-        l = blob->block.tables.addresses[ti].l;
+        size_t ti = qr->client_address_index - blob->index_offset;
         uint8_t* ip = blob->block.tables.addresses[ti].v;
-
-        if (l == 4)
-            printf("%d.%d.%d.0",
-                   ip[0],ip[1],ip[2]);
+        if (blob->block.tables.addresses[ti].l == 4)
+            printf("%d.%d.%d.0",ip[0],ip[1],ip[2]);
         else
-            printf("%02x%02x:%02x%02x:%02x%02x::",
-                    ip[0],ip[1],ip[2],ip[3],ip[4],ip[5]);
+            printf("%02x%02x:%02x%02x:%02x%02x::",ip[0],ip[1],ip[2],ip[3],ip[4],ip[5]);
 
         uint8_t hops = qr->client_hoplimit;
         printf(",%d,%d,%s,%d,%d,%d,%d\n",
