@@ -20,7 +20,14 @@ ADD_EXECUTABLE(cdns2sig
    cdns/lib/cdns.cpp
 )
 
-INSTALL(TARGETS cdns2sig
+ADD_EXECUTABLE(cdns2line
+   src/cdns2line.cpp
+   cdns/lib/cbor.cpp
+   cdns/lib/cdns.cpp
+)
+
+INSTALL(TARGETS cdns2sig cdns2line
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
          PUBLIC_HEADER DESTINATION include)
+
